@@ -281,7 +281,7 @@ copied.
   sand-coloured. Lighting is flat and fixed to the camera, so the relief reads the same from any
   side.
 - **Depth is stretched** so a gentle slope over kilometres still reads:
-  `0.35 ÷ (max depth ÷ narrower side)`, kept between 1× and 8×. Land rises at most as high as the
+  `0.35 ÷ (max depth ÷ narrower side)`, kept between 1× and 4×. Land rises at most as high as the
   water is deep: enough for an island's real shape, without a mountain behind the coast towering
   over the seabed.
 - **Contours** are drawn at a round step (`maxDepth ÷ 15`, rounded up to 1, 2 or 5 × 10ⁿ), with
