@@ -198,7 +198,16 @@ export function proxy(request: NextRequest) {
     // govern. Nor does it need a `Cross-Origin-Opener-Policy` in their place -
     // Google documents `same-origin-allow-popups` as a requirement for its *popup*
     // flows, and this one opens no popup.
-    cspList("connect-src", "'self'", apiOrigin, basemapOriginSources),
+    // Google's Map Tiles API and Mapbox's raster tiles, which the seascape explorer
+    // can draw its 2D map from, each allowed only on an instance with a key for it.
+    cspList(
+      "connect-src",
+      "'self'",
+      apiOrigin,
+      basemapOriginSources,
+      process.env.GOOGLE_MAPS_API_KEY ? "https://tile.googleapis.com" : "",
+      process.env.MAPBOX_ACCESS_TOKEN ? "https://api.mapbox.com" : "",
+    ),
     "frame-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",

@@ -42,6 +42,8 @@ const SECTIONS: Record<string, { index: string; item: string }> = {
   privacy: { index: "privacy policy", item: "privacy policy" },
   terms: { index: "terms of service", item: "terms of service" },
   developers: { index: "API reference", item: "API reference" },
+  "seascape-map": { index: "seafloor explorer", item: "seafloor explorer" },
+  "seascape-sample": { index: "seascape sample", item: "seascape sample" },
 };
 
 export function labelForPath(path: string): string {
