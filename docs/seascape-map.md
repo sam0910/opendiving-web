@@ -15,13 +15,12 @@ every source's request small, one page of KHOA's API among them. The view draws 
 per side. Under the view, a list shows which sources were tried and why each was or wasn't used,
 followed by the credit the chosen source requires.
 
-## The 2D map: switchable tile suppliers
+## The 2D map: the tile supplier
 
-The explorer's 2D map can come from five suppliers. The operator picks which are offered and which
-comes first; a viewer then switches between them with the buttons at the top right, and their last
-pick is remembered in that browser.
+The explorer's 2D map can come from five suppliers. The operator picks one in `.env.local`; viewers
+don't choose, and nothing about it is kept in their browser.
 
-| Id                 | Button           | Needs                                        | Billing                                                     |
+| Id                 | Name             | Needs                                        | Billing                                                     |
 | ------------------ | ---------------- | -------------------------------------------- | ----------------------------------------------------------- |
 | `openfreemap`      | OpenStreetMap    | nothing (the app's own basemap)              | free, no stated limit, no guarantee                         |
 | `google-satellite` | Google satellite | `GOOGLE_MAPS_API_KEY`                        | Map Tiles API, per tile (below)                             |
@@ -29,16 +28,15 @@ pick is remembered in that browser.
 | `mapbox-satellite` | Mapbox satellite | `MAPBOX_ACCESS_TOKEN` (a public `pk.` token) | Mapbox Static Tiles, per tile (check Mapbox's pricing page) |
 | `mapbox-streets`   | Mapbox           | `MAPBOX_ACCESS_TOKEN`                        | Mapbox Static Tiles, per tile                               |
 
-**Choosing them:** `SEASCAPE_MAP_SUPPLIERS` is a comma-separated list of ids, in order, **the first
-being the default**, e.g.
+**Choosing it:** `SEASCAPE_MAP_SUPPLIERS` names **one** id, e.g.
 
 ```
-SEASCAPE_MAP_SUPPLIERS=openfreemap,google-satellite,mapbox-satellite
+SEASCAPE_MAP_SUPPLIERS=google-satellite
 ```
 
-Unknown ids are ignored. Unset, every supplier is offered with OpenStreetMap first, the one with no
-quota to run out. A supplier whose key is missing, or whose service won't answer, is left out rather
-than shown broken; if nothing is left, OpenStreetMap is used. The list comes from
+Unset, the map uses OpenStreetMap, the one with no quota to run out. **There is no fallback:** an
+unknown id, a list, or a supplier whose key is missing makes the map say it couldn't load, and the
+web server's log says why. Restart the web app after changing it. The pick comes from
 `/seascape-map/tile-suppliers`, and the map waits for it rather than drawing one supplier's tiles
 and then another's.
 
@@ -65,12 +63,11 @@ tile.
 
 **Tiles per spot, measured** on a 1086 × 655 px map on a high-density screen:
 
-| Action                                  | Google tiles     |
-| --------------------------------------- | ---------------- |
-| Open the map at a spot (zoom 15)        | about 25         |
-| Double-click and open the 3D view       | 0                |
-| Zoom in one level                       | about 25–37 more |
-| Switch between Google map and satellite | about 20 more    |
+| Action                            | Google tiles     |
+| --------------------------------- | ---------------- |
+| Open the map at a spot (zoom 15)  | about 25         |
+| Double-click and open the 3D view | 0                |
+| Zoom in one level                 | about 25–37 more |
 
 A typical look at one dive site (open, zoom a couple of times) is **about 60–100 tiles**.
 

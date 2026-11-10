@@ -1,7 +1,7 @@
 // Who draws the seascape explorer's 2D map. The app's own basemap (OpenStreetMap via
 // OpenFreeMap) needs nothing; Google and Mapbox need a key each, and bill per tile
-// beyond their free allowance. Which ones are offered, and which comes first, is the
-// operator's choice (`SEASCAPE_MAP_SUPPLIERS`); a viewer then switches between them.
+// beyond their free allowance. Which one draws the map is the operator's choice
+// (`SEASCAPE_MAP_SUPPLIERS`); viewers don't choose.
 
 export const TILE_SUPPLIER_IDS = [
   "openfreemap",
@@ -32,16 +32,16 @@ export interface TileSupplier {
 }
 
 /**
- * The supplier ids a `SEASCAPE_MAP_SUPPLIERS` value names, in its order, without
- * repeats. Unknown ids are dropped; unset or empty gives every supplier, the app's own
- * basemap first.
+ * The supplier a `SEASCAPE_MAP_SUPPLIERS` value names, the app's own basemap when unset
+ * or empty. Anything else, a list included, is a mistake to fix rather than guess at.
  */
-export function parseSupplierList(value: string | undefined): TileSupplierId[] {
-  const ids = (value ?? "")
-    .split(",")
-    .map((id) => id.trim().toLowerCase())
-    .filter((id): id is TileSupplierId =>
-      (TILE_SUPPLIER_IDS as readonly string[]).includes(id),
-    );
-  return ids.length > 0 ? [...new Set(ids)] : [...TILE_SUPPLIER_IDS];
+export function parseSupplier(value: string | undefined): TileSupplierId {
+  const id = (value ?? "").trim().toLowerCase();
+  if (!id) return "openfreemap";
+  if ((TILE_SUPPLIER_IDS as readonly string[]).includes(id)) {
+    return id as TileSupplierId;
+  }
+  throw new Error(
+    `SEASCAPE_MAP_SUPPLIERS: "${value}" is not one of ${TILE_SUPPLIER_IDS.join(", ")}`,
+  );
 }

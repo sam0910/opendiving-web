@@ -1,6 +1,6 @@
 import { googleTiles } from "@/lib/google-tiles.server";
 import {
-  parseSupplierList,
+  parseSupplier,
   type TileSupplier,
   type TileSupplierId,
 } from "@/lib/tile-suppliers";
@@ -58,27 +58,14 @@ async function resolve(id: TileSupplierId): Promise<TileSupplier | null> {
 }
 
 /**
- * The suppliers this instance offers, in `SEASCAPE_MAP_SUPPLIERS` order: the first is
- * the explorer's default. One missing its key, or whose service won't answer, is left
- * out rather than offered broken; the app's own basemap is the fallback when nothing
- * else is left.
+ * The supplier named in `SEASCAPE_MAP_SUPPLIERS` that draws the explorer's map. No
+ * fallback: one missing its key fails here rather than the map quietly drawing another.
  */
-export async function tileSuppliers(): Promise<TileSupplier[]> {
-  const ids = parseSupplierList(process.env.SEASCAPE_MAP_SUPPLIERS);
-  const resolved = await Promise.all(
-    ids.map(async (id) => {
-      try {
-        return await resolve(id);
-      } catch (error) {
-        console.warn(`Seascape map: leaving out ${id}`, error);
-        return null;
-      }
-    }),
-  );
-  const suppliers = resolved.filter(
-    (supplier): supplier is TileSupplier => supplier !== null,
-  );
-  return suppliers.length > 0
-    ? suppliers
-    : [(await resolve("openfreemap")) as TileSupplier];
+export async function tileSupplier(): Promise<TileSupplier> {
+  const id = parseSupplier(process.env.SEASCAPE_MAP_SUPPLIERS);
+  const supplier = await resolve(id);
+  if (!supplier) {
+    throw new Error(`Seascape map: ${id} needs its key in .env.local`);
+  }
+  return supplier;
 }
