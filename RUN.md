@@ -1,6 +1,6 @@
 # Running the web app locally (dev)
 
-Full guide, covering the API, sign-in and Commons: [../opendiving/RUN.md](../opendiving/RUN.md)
+Full guide, covering the API, sign-in and Commons: [../RUN.md](../RUN.md)
 
 The API has to be running first, on http://localhost:8000 (`.env` points at it).
 
@@ -10,8 +10,8 @@ The API has to be running first, on http://localhost:8000 (`.env` points at it).
 nvm use 24
 # Logged outside this folder: `next dev` watches it, and a log written inside it makes
 # the page recompile and reload on every line.
-mkdir -p ../opendiving/.logs
-nohup pnpm dev > ../opendiving/.logs/web.log 2>&1 &
+mkdir -p ../.logs
+nohup pnpm dev > ../.logs/web.log 2>&1 &
 open http://localhost:3000
 ```
 
