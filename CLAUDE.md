@@ -67,7 +67,8 @@ silently returning the previous frame.
 exists to regenerate this repo's `docs/screenshots/` (see its `opendiving-web-home-screenshot`
 skill), not to answer ad-hoc "does this look right?" questions.
 
-The `playwright` MCP server is the ad-hoc answer — user scope in `~/.claude.json`, so it loads in
+Ad-hoc checks go to ego-browser first (_Testing in the browser_ in `AGENTS.md`). The `playwright`
+MCP server is the fallback when it isn't installed — user scope in `~/.claude.json`, so it loads in
 every repo — and it is worth reaching for the moment the pane misbehaves, rather than after a detour
 through it. It drives its own Chrome and shares nothing with the pane. Both it and `screenshots.mjs`
 are immune for the same reason: Playwright captures through CDP `Page.captureScreenshot`, which
