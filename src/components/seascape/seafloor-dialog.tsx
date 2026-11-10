@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,13 +12,20 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  seafloorAPI,
+  type SeafloorAnswer,
+  type SeafloorSpan,
+} from "@/lib/api/seafloor";
+import {
+  attemptLine,
+  lookUpErrorText,
+  noGridText,
   SEAFLOOR_MAX_SPAN_METERS,
   SEAFLOOR_SOURCES,
   SEAFLOOR_SPANS,
-  type SeafloorAttempt,
-  type SeafloorResult,
-  type SeafloorSourceId,
+  sortAttempts,
 } from "@/lib/seafloor";
+import { toSeascapeGrid } from "@/lib/seascape-grid";
 
 import { SeascapeSample } from "./seascape-sample";
 
@@ -27,38 +34,14 @@ export interface SeafloorPoint {
   lon: number;
 }
 
-// The sources in the order they are preferred, for listing what was tried.
-const SOURCE_ORDER: SeafloorSourceId[] = [
-  "noaa_dem",
-  "emodnet",
-  "khoa",
-  "gmrt",
-  "etopo2022",
-];
-
-const OUTCOME_TEXT: Record<SeafloorAttempt["outcome"], string> = {
-  used: "used",
-  "no coverage": "doesn't cover this spot",
-  "not configured": "not set up",
-  "not needed": "not needed",
-  "too coarse": "too coarse",
-  "too little data": "too little data",
-  "mostly land": "mostly land",
-  failed: "failed",
-};
-
 function formatPoint({ lat, lon }: SeafloorPoint): string {
   return `${Math.abs(lat).toFixed(5)}° ${lat >= 0 ? "N" : "S"}, ${Math.abs(lon).toFixed(5)}° ${lon >= 0 ? "E" : "W"}`;
-}
-
-function formatMeters(meters: number): string {
-  return `~${meters < 10 ? meters.toFixed(1) : Math.round(meters)} m`;
 }
 
 interface Loaded {
   /** The request this answers, so a stale answer is never shown for a new spot. */
   key: string;
-  result: SeafloorResult | null;
+  result: SeafloorAnswer | null;
   error?: string;
 }
 
@@ -70,47 +53,31 @@ export function SeafloorDialog({
   point: SeafloorPoint | null;
   onClose: () => void;
 }) {
-  const [span, setSpan] = useState(SEAFLOOR_MAX_SPAN_METERS);
+  const [span, setSpan] = useState<SeafloorSpan>(SEAFLOOR_MAX_SPAN_METERS);
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const key = point ? `${point.lat},${point.lon},${span}` : null;
 
   useEffect(() => {
     if (!point || !key) return;
     const controller = new AbortController();
-    const query = new URLSearchParams({
-      lat: String(point.lat),
-      lon: String(point.lon),
-      span: String(span),
-    });
-    fetch(`/seascape-map/seafloor?${query}`, { signal: controller.signal })
-      .then(async (response) => {
-        const body = (await response.json()) as SeafloorResult & {
-          error?: string;
-        };
-        // A 502 still carries what each source said; only a refusal has nothing.
-        if (!response.ok && !body.attempts) {
-          throw new Error(body.error ?? `HTTP ${response.status}`);
-        }
-        setLoaded({ key, result: body });
-      })
+    seafloorAPI
+      .lookUp(point.lat, point.lon, span, controller.signal)
+      .then((result) => setLoaded({ key, result }))
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
-        setLoaded({
-          key,
-          result: null,
-          error: error instanceof Error ? error.message : String(error),
-        });
+        setLoaded({ key, result: null, error: lookUpErrorText(error) });
       });
     return () => controller.abort();
   }, [point, span, key]);
 
   const current = loaded?.key === key ? loaded : null;
   const result = current?.result ?? null;
+  const grid = result?.status === "ok" ? result.grid : null;
   const source =
     result?.status === "ok" ? SEAFLOOR_SOURCES[result.source] : null;
-  const attempts = [...(result?.attempts ?? [])].sort(
-    (a, b) => SOURCE_ORDER.indexOf(a.source) - SOURCE_ORDER.indexOf(b.source),
-  );
+  // Kept stable across renders: the view rebuilds its scene for a new grid object.
+  const sceneGrid = useMemo(() => (grid ? toSeascapeGrid(grid) : null), [grid]);
+  const attempts = sortAttempts(result?.attempts ?? []);
 
   return (
     <Dialog
@@ -158,17 +125,17 @@ export function SeafloorDialog({
                     Finding the best seafloor data…
                   </p>
                 </>
-              ) : result?.status === "ok" && source ? (
+              ) : sceneGrid && source ? (
                 <SeascapeSample
                   key={key}
-                  grid={result.grid}
+                  grid={sceneGrid}
                   sourceLabel={source.label}
                 />
               ) : (
                 <p className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-muted-foreground">
-                  {result?.status === "dry"
-                    ? "Every source puts this spot on land. Double-click somewhere in the water."
-                    : `No source gave seafloor data here${current.error ? ` (${current.error})` : ""}. Try again in a moment.`}
+                  {result && result.status !== "ok"
+                    ? noGridText(result.status)
+                    : current.error}
                 </p>
               )}
             </div>
@@ -184,11 +151,7 @@ export function SeafloorDialog({
                         : undefined
                     }
                   >
-                    {SEAFLOOR_SOURCES[attempt.source].label}
-                    {attempt.cellSizeMeters !== undefined &&
-                      ` (${formatMeters(attempt.cellSizeMeters)} native)`}
-                    : {OUTCOME_TEXT[attempt.outcome]}
-                    {attempt.detail && ` · ${attempt.detail}`}
+                    {attemptLine(attempt, grid)}
                   </li>
                 ))}
               </ul>
@@ -205,53 +168,50 @@ export function SeafloorDialog({
                 >
                   {source.url.replace(/^https:\/\//, "")}
                 </a>
-                {result?.status === "ok" &&
-                  result.grid.landFrom === "openstreetmap" && (
-                    <>
-                      {" "}
-                      Coastline:{" "}
-                      <a
-                        href="https://www.openstreetmap.org/copyright"
-                        className="underline"
-                        rel="noreferrer"
-                        target="_blank"
-                      >
-                        © OpenStreetMap contributors
-                      </a>
-                      , via OpenFreeMap.
-                    </>
-                  )}
-                {result?.status === "ok" &&
-                  result.grid.landHeightFrom === "aws-terrain" && (
-                    <>
-                      {" "}
-                      Land heights: AWS Terrain Tiles (Mapzen/Tilezen), from
-                      SRTM and other public elevation data.{" "}
-                      <a
-                        href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md"
-                        className="underline"
-                        rel="noreferrer"
-                        target="_blank"
-                      >
-                        Sources
-                      </a>
-                    </>
-                  )}
-                {result?.status === "ok" &&
-                  result.grid.landHeightFrom === "gmrt" && (
-                    <>
-                      {" "}
-                      Land heights: {SEAFLOOR_SOURCES.gmrt.credit}{" "}
-                      <a
-                        href={SEAFLOOR_SOURCES.gmrt.url}
-                        className="underline"
-                        rel="noreferrer"
-                        target="_blank"
-                      >
-                        {SEAFLOOR_SOURCES.gmrt.url.replace(/^https:\/\//, "")}
-                      </a>
-                    </>
-                  )}
+                {grid?.land_from === "openstreetmap" && (
+                  <>
+                    {" "}
+                    Coastline:{" "}
+                    <a
+                      href="https://www.openstreetmap.org/copyright"
+                      className="underline"
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      © OpenStreetMap contributors
+                    </a>
+                    , via OpenFreeMap.
+                  </>
+                )}
+                {grid?.land_height_from === "aws_terrain" && (
+                  <>
+                    {" "}
+                    Land heights: AWS Terrain Tiles (Mapzen/Tilezen), from SRTM
+                    and other public elevation data.{" "}
+                    <a
+                      href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md"
+                      className="underline"
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      Sources
+                    </a>
+                  </>
+                )}
+                {grid?.land_height_from === "gmrt" && (
+                  <>
+                    {" "}
+                    Land heights: {SEAFLOOR_SOURCES.gmrt.credit}{" "}
+                    <a
+                      href={SEAFLOOR_SOURCES.gmrt.url}
+                      className="underline"
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      {SEAFLOOR_SOURCES.gmrt.url.replace(/^https:\/\//, "")}
+                    </a>
+                  </>
+                )}
               </p>
             )}
           </>

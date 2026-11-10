@@ -162,6 +162,16 @@ const DESTINATIONS = [
     page: () => import("./import/[id]/log/page"),
     params: { id: "import-1" },
   },
+  {
+    route: "/seascape-map",
+    path: "/seascape-map",
+    page: () => import("./seascape-map/page"),
+  },
+  {
+    route: "/seascape-sample",
+    path: "/seascape-sample",
+    page: () => import("./seascape-sample/page"),
+  },
 ];
 
 // ------------------------------------------------------------------ the derivation
