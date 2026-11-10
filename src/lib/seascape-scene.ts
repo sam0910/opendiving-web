@@ -28,7 +28,7 @@ const LAND_CAP = 1;
 // The exaggeration aims for this depth-to-width ratio, within these bounds.
 const TARGET_RELIEF = 0.35;
 const MIN_EXAGGERATION = 1;
-const MAX_EXAGGERATION = 8;
+const MAX_EXAGGERATION = 4;
 
 // How far a contour floats above its own depth, so it is not lost inside the surface,
 // and its label a little higher still.
@@ -101,7 +101,7 @@ export function niceStep(value: number): number {
   return nice * magnitude;
 }
 
-/** How much to stretch depth: enough to read, never flatter than life or wilder than 8×. */
+/** How much to stretch depth: enough to read, never flatter than life or wilder than 4×. */
 export function verticalExaggeration(
   maxDepth: number,
   narrowSpanMeters: number,

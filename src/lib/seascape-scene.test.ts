@@ -20,8 +20,8 @@ describe("niceStep", () => {
 });
 
 describe("verticalExaggeration", () => {
-  it("stretches a shallow slope, up to 8×", () => {
-    expect(verticalExaggeration(100, 8000)).toBe(8);
+  it("stretches a shallow slope, up to 4×", () => {
+    expect(verticalExaggeration(100, 8000)).toBe(4);
   });
 
   it("never flattens a steep one", () => {
