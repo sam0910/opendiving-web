@@ -82,9 +82,36 @@ limit/offset.
 
 Full contract, including the status codes in use, is in `opendiving-api/AGENTS.md`.
 
+## Testing in the browser
+
+Browser testing here goes through the **ego-browser** skill (`/ego-browser`) by default. It is user
+scope (`~/.claude/skills/ego-browser/`), so a clone does not have it: read this section as _if you
+have it_, and otherwise fall back to the `playwright` MCP server, which `CLAUDE.md` covers along
+with the failure modes of the other browser tools.
+
+- **Test against the running stack**: the web dev server on http://localhost:3000 and the API on
+  :8000. Both are usually up already; check with `curl` before starting anything, and never start
+  a second `next dev`.
+- **Run `ego-browser skill` first** and follow what it prints: it is the guide for the installed
+  version. Its API is its own, not Playwright's, even where the names match. Scripts go to
+  `ego-browser nodejs`, which runs outside your working directory and shell environment, so every
+  path is absolute and every input is written into the script.
+- **It drives the user's own Ego Lite profile**, so the app is often already signed in as them:
+  check the header before signing in, and remember that what you save lands in their account. If
+  it is signed out, use `opendiving-web-login` (`goto()` the link, then click **Sign in**). Signing
+  in as another account replaces the user's session in that profile, so ask first. Read the
+  skill's `references/clearing-state.md` before clearing cookies or storage: some clears reach the
+  whole profile.
+- **Maps and the 3D seafloor view are canvases.** Act on element centres or coordinates —
+  `page.dblclick("loc=role:region[name='Map']")` double-clicks the middle of the map — and assert
+  on DOM text, such as the 3D dialog's `Depth N.N×` label, rather than on pixels. Dialogs animate
+  in, so a screenshot taken the moment their text appears catches them half transparent.
+- **One task space per goal**, ended with `await task.finish({ keep: [] })`, so no tabs are left
+  open in the user's browser.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
-# This is NOT the Next.js you know
+## This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 
