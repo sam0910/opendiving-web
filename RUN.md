@@ -25,4 +25,6 @@ pkill -f "next dev"
 
 ## Gotcha
 
-`next dev` rewrites `AGENTS.md` on every start. Run `git checkout AGENTS.md` before committing.
+`next dev` rewrites the `nextjs-agent-rules` block in `AGENTS.md` on every start, but the committed
+block already matches, so the file stays clean. After a Next.js upgrade changes that block, commit
+the rewrite with your work rather than checking it out: it only comes back on the next start.
