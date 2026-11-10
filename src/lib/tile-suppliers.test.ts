@@ -1,23 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { parseSupplierList, TILE_SUPPLIER_IDS } from "@/lib/tile-suppliers";
+import { parseSupplier } from "@/lib/tile-suppliers";
 
-describe("parseSupplierList", () => {
-  it("keeps the operator's order, so the first named is the default", () => {
-    expect(parseSupplierList("google-satellite, openfreemap")).toEqual([
-      "google-satellite",
-      "openfreemap",
-    ]);
+describe("parseSupplier", () => {
+  it("takes the one supplier named, whatever the case or spacing", () => {
+    expect(parseSupplier(" Google-Satellite ")).toBe("google-satellite");
   });
 
-  it("drops unknown ids and repeats, whatever the case", () => {
-    expect(
-      parseSupplierList("Mapbox-Streets,bing,mapbox-streets,openfreemap"),
-    ).toEqual(["mapbox-streets", "openfreemap"]);
+  it("uses the app's own basemap when unset or empty", () => {
+    expect(parseSupplier(undefined)).toBe("openfreemap");
+    expect(parseSupplier("  ")).toBe("openfreemap");
   });
 
-  it("offers everything, the app's own basemap first, when unset or empty", () => {
-    expect(parseSupplierList(undefined)).toEqual([...TILE_SUPPLIER_IDS]);
-    expect(parseSupplierList(" , ")).toEqual([...TILE_SUPPLIER_IDS]);
-    expect(parseSupplierList(undefined)[0]).toBe("openfreemap");
+  it("refuses an unknown id or a list rather than guessing", () => {
+    expect(() => parseSupplier("bing")).toThrow(/SEASCAPE_MAP_SUPPLIERS/);
+    expect(() => parseSupplier("google-satellite,openfreemap")).toThrow(
+      /SEASCAPE_MAP_SUPPLIERS/,
+    );
   });
 });
