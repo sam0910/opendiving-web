@@ -14,6 +14,7 @@ import { MapCredit } from "@/components/map/map-credit";
 import { markerClassName } from "@/components/map/marker";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { useConfig } from "@/contexts/ConfigContext";
 import { MAX_ZOOM, MIN_ZOOM, type Basemap } from "@/lib/basemap";
 import type { TileSupplier, TileSupplierId } from "@/lib/tile-suppliers";
@@ -196,32 +197,34 @@ export default function SeascapeMap() {
         }
       />
       <div className="absolute left-2 top-2 z-10 flex flex-col gap-1">
-        <Button
-          type="button"
-          variant="secondary"
-          size="icon"
-          className="h-8 w-8"
-          aria-label="Zoom in"
-          disabled={!map}
-          onClick={() =>
-            map?.easeTo({ zoom: Math.min(map.getZoom() + 1, MAX_ZOOM) })
-          }
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          size="icon"
-          className="h-8 w-8"
-          aria-label="Zoom out"
-          disabled={!map}
-          onClick={() =>
-            map?.easeTo({ zoom: Math.max(map.getZoom() - 1, MIN_ZOOM) })
-          }
-        >
-          <Minus className="h-4 w-4" />
-        </Button>
+        <IconTooltip label="Zoom in" side="right">
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon"
+            className="h-8 w-8"
+            disabled={!map}
+            onClick={() =>
+              map?.easeTo({ zoom: Math.min(map.getZoom() + 1, MAX_ZOOM) })
+            }
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        </IconTooltip>
+        <IconTooltip label="Zoom out" side="right">
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon"
+            className="h-8 w-8"
+            disabled={!map}
+            onClick={() =>
+              map?.easeTo({ zoom: Math.max(map.getZoom() - 1, MIN_ZOOM) })
+            }
+          >
+            <Minus className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        </IconTooltip>
       </div>
       {/* At the bottom, clear of the supplier buttons across the top. */}
       <p className="pointer-events-none absolute bottom-7 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-md bg-background/85 px-3 py-1 text-sm shadow-sm">

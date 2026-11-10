@@ -9,6 +9,7 @@ import { LineSegments2 } from "three/addons/lines/LineSegments2.js";
 import { LineSegmentsGeometry } from "three/addons/lines/LineSegmentsGeometry.js";
 
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import type { SeascapeGrid } from "@/lib/seascape-grid";
 import {
   buildSeascapeScene,
@@ -512,30 +513,33 @@ export default function SeascapeView({ grid, sourceLabel }: SeascapeViewProps) {
       </div>
 
       <div className="absolute right-3 top-3 flex flex-col gap-2">
-        <Button
-          variant="outline"
-          size="icon"
-          aria-label="Zoom in"
-          onClick={() => handleRef.current?.zoomBy(ZOOM_STEP)}
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          aria-label="Zoom out"
-          onClick={() => handleRef.current?.zoomBy(1 / ZOOM_STEP)}
-        >
-          <Minus className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          aria-label="Reset view"
-          onClick={() => handleRef.current?.reset()}
-        >
-          <RotateCcw className="h-4 w-4" />
-        </Button>
+        <IconTooltip label="Zoom in" side="left">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => handleRef.current?.zoomBy(ZOOM_STEP)}
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        </IconTooltip>
+        <IconTooltip label="Zoom out" side="left">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => handleRef.current?.zoomBy(1 / ZOOM_STEP)}
+          >
+            <Minus className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        </IconTooltip>
+        <IconTooltip label="Reset view" side="left">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => handleRef.current?.reset()}
+          >
+            <RotateCcw className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        </IconTooltip>
       </div>
 
       <p className="pointer-events-none absolute bottom-3 right-3 rounded-md bg-background/80 px-2 py-1 text-xs text-muted-foreground shadow-sm">
